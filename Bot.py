@@ -37,8 +37,13 @@ async def hi(ctx):
 async def tame(ctx, creature, level):
     base = "https://www.dododex.com/taming/"
     url = base + creature.lower() + '/' + level
-    embed = discord.Embed(title=f'Taming Stats for {creature.capitalize()} Lvl {level}', url=url, description='')
-    await ctx.send(embed=embed)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as r:
+            if r.status == 200:
+                embed = discord.Embed(title=f'Taming stats for {creature} with lvl. {level}',url=url, description='')
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send(f'I found no stats for {creature}')
 
 
 @bot.command(name='cat', help='meow')
@@ -48,6 +53,22 @@ async def cat(ctx):
             if r.status == 200:
                 js = await r.json()
                 await ctx.send(js['file'])
+
+
+@bot.command(name='wiki', help='search Ark wiki')
+async def wiki(ctx, search):
+    base = 'https://ark.gamepedia.com/'
+    if not search[0].isupper():
+        search = search.capitalize()
+
+    url = base + search
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as r:
+            if r.status == 200:
+                embed = discord.Embed(title=f'Wiki entry for {search}',url=url, description='')
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send(f'I found no wiki page for {search}')
 
 
 @bot.event
