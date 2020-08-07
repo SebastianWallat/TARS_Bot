@@ -40,7 +40,7 @@ async def tame(ctx, creature, level):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as r:
             if r.status == 200:
-                embed = discord.Embed(title=f'Taming stats for {creature} with lvl. {level}',url=url, description='')
+                embed = discord.Embed(title=f'Taming stats for {creature} with lvl. {level}', url=url, description='')
                 await ctx.send(embed=embed)
             else:
                 await ctx.send(f'I found no stats for {creature}')
@@ -65,7 +65,7 @@ async def wiki(ctx, search):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as r:
             if r.status == 200:
-                embed = discord.Embed(title=f'Wiki entry for {search}',url=url, description='')
+                embed = discord.Embed(title=f'Wiki entry for {search}', url=url, description='')
                 await ctx.send(embed=embed)
             else:
                 await ctx.send(f'I found no wiki page for {search}')
@@ -86,6 +86,7 @@ async def on_error(event, *args, **kwargs):
             f.write(f'Exception | Type: {sys.exc_info()}  Message: {args[0]}\n')
         else:
             raise
+
 
 # start bot
 bot.run(TOKEN)
