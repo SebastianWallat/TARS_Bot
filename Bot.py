@@ -1,17 +1,17 @@
-import os
+import json
 import random
 
 import aiohttp
 import discord
 import sys
 from discord.ext import commands
-from dotenv import load_dotenv
-from pathlib import Path
+from environs import Env
 
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path)
+env = Env()
+env.read_env()
 
-TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN = env.str('DISCORD_TOKEN')
+CAT_TOKEN = env.str('CAT_API_TOKEN')
 
 bot = commands.Bot(command_prefix='!')
 
@@ -49,10 +49,13 @@ async def tame(ctx, creature, level):
 @bot.command(name='cat', help='meow')
 async def cat(ctx):
     async with aiohttp.ClientSession() as session:
-        async with session.get('http://aws.random.cat/meow') as r:
+        async with session.get(f'https://api.thecatapi.com/v1/images/search?format=json?api_key={CAT_TOKEN}') as r:
             if r.status == 200:
                 js = await r.json()
-                await ctx.send(js['file'])
+                url = js[0]["url"]
+                embed = discord.Embed(title='Meow', url=url, description='')
+                embed.set_image(url=url)
+                await ctx.send(embed=embed)
 
 
 @bot.command(name='wiki', help='search Ark wiki')
