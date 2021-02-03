@@ -1,77 +1,41 @@
-import json
-import random
-
-import aiohttp
 import discord
 import sys
 from discord.ext import commands
 from environs import Env
 
+from cogs.Ark import Ark
+from cogs.Adlersson import Adlersson
+from cogs.Animals import Animals
+from cogs.Memes import Memes
+from cogs.Util import Util
+from helper import Helper
+
 env = Env()
 env.read_env()
 
-TOKEN = env.str('DISCORD_TOKEN')
-CAT_TOKEN = env.str('CAT_API_TOKEN')
+TOKEN: str = env.str('DISCORD_TOKEN')
+CAT_TOKEN: str = env.str('CAT_API_TOKEN')
+LOAD_OPUS: bool = env.bool('LOAD_OPUS', False)
+
+if TOKEN is None or CAT_TOKEN is None:
+    raise EnvironmentError("TOKEN or CAT_API_TOKEN not specified")
 
 bot = commands.Bot(command_prefix='!')
+
+# load modules
+bot.add_cog(Adlersson(bot))
+bot.add_cog(Animals(bot, CAT_TOKEN))
+bot.add_cog(Ark(bot))
+bot.add_cog(Memes(bot))
+bot.add_cog(Util(bot))
 
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(name='3D Schach'))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="!help"))
+    if LOAD_OPUS:
+        Helper.load_opus()
     print('bot started')
-
-
-@bot.command(name='hi', help='Say hi to the bot')
-async def hi(ctx):
-    responses = [
-        'Hi',
-        'Hello!',
-    ]
-
-    response = random.choice(responses)
-    await ctx.send(response)
-
-
-@bot.command(name='tame', help='get ark taming stats')
-async def tame(ctx, creature, level):
-    base = "https://www.dododex.com/taming/"
-    url = base + creature.lower() + '/' + level
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as r:
-            if r.status == 200:
-                embed = discord.Embed(title=f'Taming stats for {creature} with lvl. {level}', url=url, description='')
-                await ctx.send(embed=embed)
-            else:
-                await ctx.send(f'I found no stats for {creature}')
-
-
-@bot.command(name='cat', help='meow')
-async def cat(ctx):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f'https://api.thecatapi.com/v1/images/search?format=json?api_key={CAT_TOKEN}') as r:
-            if r.status == 200:
-                js = await r.json()
-                url = js[0]["url"]
-                embed = discord.Embed(title='Meow', url=url, description='')
-                embed.set_image(url=url)
-                await ctx.send(embed=embed)
-
-
-@bot.command(name='wiki', help='search Ark wiki')
-async def wiki(ctx, search):
-    base = 'https://ark.gamepedia.com/'
-    if not search[0].isupper():
-        search = search.capitalize()
-
-    url = base + search
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as r:
-            if r.status == 200:
-                embed = discord.Embed(title=f'Wiki entry for {search}', url=url, description='')
-                await ctx.send(embed=embed)
-            else:
-                await ctx.send(f'I found no wiki page for {search}')
 
 
 @bot.event
@@ -83,7 +47,7 @@ async def on_command_error(ctx, error):
 
 
 @bot.event
-async def on_error(event, *args, **kwargs):
+async def on_error(event, *args):
     with open('err.log', 'a') as f:
         if event == 'on_message':
             f.write(f'Exception | Type: {sys.exc_info()}  Message: {args[0]}\n')
