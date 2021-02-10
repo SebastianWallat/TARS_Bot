@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3.8
 COPY Bot.py ./
 COPY helper.py ./
 ADD mp3 ./mp3
